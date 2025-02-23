@@ -1,0 +1,95 @@
+# -*- mode: snippet -*-
+# name: Full template of Mario's beamer class
+# key: beamer
+# --
+\documentclass[aspectratio=1610]{beamer} 
+% remove navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+\usetheme{Boadilla}
+\usepackage{tikz}    % TikZ for positioning and scaling
+\usepackage[absolute,overlay]{textpos} % Required for positioning text absolutely
+
+\usepackage{cancel} % draw a diagonal line over the argument (use for MET)
+\usepackage{rotating} 
+\usepackage{mathrsfs}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{verbatim}
+
+\usepackage{soul}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{calc}
+
+\newcommand{\link}[2]{\href{#1}{\textcolor{purple}{\underline{\textbf{#2}}}}}
+\newcommand{\hlink}[2]{\hyperlink{#1}{\textcolor{purple}{\underline{\textbf{#2}}}}}
+
+
+% Background block definition
+\makeatletter
+\newbox\@backgroundblock
+\newenvironment{backgroundblock}[2]{%
+  \global\setbox\@backgroundblock=\vbox\bgroup%
+    \unvbox\@backgroundblock%
+    \vbox to0pt\bgroup\vskip#2\hbox to0pt\bgroup\hskip#1\relax%
+}{\egroup\egroup\egroup}
+\addtobeamertemplate{background}{\box\@backgroundblock}{}
+\makeatother
+
+
+\newcommand{\mysquare}[6]{
+  \begin{backgroundblock}{#3cm}{#4cm}
+    \begin{tikzpicture}
+      \draw<#5>[fill=#6] (0.0,0.0) -- (0.0,#2) -- (#1,#2) -- (#1,0.0) -- (0.0,0.0);
+    \end{tikzpicture}
+  \end{backgroundblock}
+}
+
+\newcommand{\mycircleForeground}[5]{
+  \begin{tikzpicture}[overlay]
+    \draw<#4>[fill=#5] 
+      ($(current page.south west) + (#1cm, #2cm)$) circle (#3cm);
+  \end{tikzpicture}
+}
+\usetikzlibrary{calc}
+\newcommand{\mysquareForeground}[6]{
+
+  \begin{tikzpicture}[overlay]
+    \draw<#5>[fill=#6] 
+      ($(current page.south west) + (#3cm, #4cm)$) rectangle ++(#1cm, #2cm);
+  \end{tikzpicture}
+}
+
+
+\newcommand{\mytriangle}[8]{
+  \begin{backgroundblock}{#5cm}{#6cm}
+    \begin{tikzpicture}
+      %            B
+      %            /\
+      %           /  \
+      %          /____\  
+      %        A       C   Pos A       Pos B      Pos C        Pos A
+      \draw<#7>[fill=#8] (0.0,0.0) -- (#1,#2) -- (#3,#4) -- (0.0,0.0);
+    \end{tikzpicture}
+  \end{backgroundblock}
+}
+
+
+
+\title{{$1}}
+\institute{$2}
+\author{$3}
+\date{\today}
+
+\begin{document}
+
+\frame{\titlepage} 
+
+
+\begin{frame}
+  \frametitle{a}
+  $0  
+\end{frame}
+
+\end{document}
