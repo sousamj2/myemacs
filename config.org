@@ -417,7 +417,7 @@ Something to test
 #+begin_src emacs-lisp
   (use-package swiper
     :ensure t
-    :config (global-set-key "\C-s" 'swiper))
+    :config (global-set-key (kbd "s-r") 'swiper))
 #+end_src
 
 * TODO EXWM
@@ -586,21 +586,25 @@ M-n breaks with company. Attemped map with C-q (closer with the pinky-emacs chec
   (add-hook 'python-mode-hook 'yas-minor-mode)
 #+end_src
 
-** Modes to discover under /home/sargedas/.emacs.d/elpa/yasnippet-snippets-20241207.2221/snippets
-*** C and C#
-[] c-mode
-[] cc-mode
-[] c-lang-mode
-[] csharp-mode
-[] csharp-ts-mode
-[] c-lang-common
+** Modes to discover [%]
+*** DONE C and C# [%]
+[ X ] c-mode
+[ X ] cc-mode
+[ X ] c-lang-mode
+[ X ] csharp-mode
+[ X ] csharp-ts-mode
+[ X ] c-lang-common
 
-*** Cpp/C++
+*** DONE Cpp/C++
 [] cpp-omnet-mode
 [] c++-mode
 [] c++-ts-mode
 
-*** cmake
+*** DONE Python
+[] julia-mode
+[] julia-ts-mode
+*** DONE emacs-lisp
+*** TODO cmake
 [] cmake-mode
 [] makefile-automake-mode
 [] make-backup-file
@@ -608,18 +612,45 @@ M-n breaks with company. Attemped map with C-q (closer with the pinky-emacs chec
 [] makefile-bsdmake-mode
 [] makefile-mode
 
-*** emacs-lisp
-*** latex-mode 
-*** Python
-[] julia-mode
-[] julia-ts-mode
-*** Bash
+*** TODO latex-mode
+*** TODO Bash
 [] sh-mode
 [] sh-ts-mode
 
-*** Others:
-**** PHP
+*** Others [%]:
+**** TODO PHP
 [] php-mode
 [] php-ts-mode
-**** sql-mode
-**** yaml-mode
+**** TODO sql-mode
+**** TODO yaml-mode
+*** Location /home/sargedas/.emacs.d/elpa/yasnippet-snippets-20241207.2221/snippets
+* Hide show mode
+** M-[F9]: Activate hs mode
+#+begin_src emacs-lisp
+  (global-set-key (kbd "M-<f9>") 'hs-minor-mode)
+#+end_src
+
+** S-[F9]: Toogle hs hidding in block
+#+begin_src emacs-lisp
+  (global-set-key (kbd "s-<f9>") 'hs-toggle-hiding)
+#+end_src
+
+** S-[F5]: Hide all blocks in the file
+#+begin_src emacs-lisp
+  (global-set-key (kbd "s-<f5>") 'hs-hide-all)
+#+end_src
+
+** S-[F6]: Hide current block
+#+begin_src emacs-lisp
+  (global-set-key (kbd "s-<f6>") 'hs-hide-block)
+#+end_src
+
+** S-[F7]: Show current block
+#+begin_src emacs-lisp
+  (global-set-key (kbd "s-<f7>") 'hs-show-block)
+#+end_src
+
+** S-[F8]: Show all blocks
+#+begin_src emacs-lisp
+  (global-set-key (kbd "s-<f8>") 'hs-show-all)
+#+end_src
