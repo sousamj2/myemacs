@@ -503,6 +503,7 @@ M-n breaks with company. Attemped map with C-q (closer with the pinky-emacs chec
     :config
     (setq company-idle-delay 0)
     (setq company-minimum-prefix-length 3)
+    ;; (setq company-global-modes '(not latex-mode))
     )
 
 #+end_src
@@ -574,16 +575,23 @@ M-n breaks with company. Attemped map with C-q (closer with the pinky-emacs chec
     (use-package yasnippet-snippets
       :ensure t)
     (yas-reload-all))
+  (require 'yasnippet)
+  (yas-global-mode 1)
 #+end_src
 
 ** emacs lisp config
 #+begin_src emacs-lisp
-  (add-hook 'emacs-lisp-mode-hook 'yas-minor-mode)
+  ;; (add-hook 'emacs-lisp-mode-hook 'yas-minor-mode)
 #+end_src
 
 ** python config
 #+begin_src emacs-lisp
-  (add-hook 'python-mode-hook 'yas-minor-mode)
+  ;; (add-hook 'prog-mode-hook #'yas-minor-mode)
+#+end_src
+
+** latex mode
+#+begin_src emacs-lisp
+  ;; (add-hook 'latex-mode 'yas-minor-mode)
 #+end_src
 
 ** Modes to discover [%]
