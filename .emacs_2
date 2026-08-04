@@ -92,6 +92,16 @@
 
 ;; (add-to-list 'load-path "~/.emacs.d")
 
+(setq c-default-style '((c-mode . "bsd")
+                        (c++-mode . "bsd")
+    			  (other . "gnu")))
+(add-hook 'c-mode-hook
+  	  (lambda()
+          	  (setq indent-tabs-mode t)
+          	  (setq tab-width 4)
+          	  (setq c-basic-offset 4)
+          	  ))
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
