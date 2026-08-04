@@ -32,6 +32,7 @@
 (global-set-key [f9] 'uncomment-region)
 (global-set-key [f12] 'LaTeX-close-environment)
 (global-set-key "\M-n" 'hippie-expand)
+(global-set-key (kbd "<s-return>") 'compile)
 (global-set-key (kbd "<C-f2>") 'visual-line-mode)
 (global-set-key (kbd "<C-f3>") 'markdown-preview)
 
@@ -72,7 +73,7 @@
 (setq TeX-view-program-list '(("Evince" "evince --page-index=%(outpage) %o")))
 (setq TeX-view-program-selection '((output-pdf "Evince")))
 
-(setq load-home-init-file t) ; don't load init file from ~/.xemacs/init.el
+(setq-default compile-command "cc -Wall -Wextra -Werror ft* && ./a.out ; rm -f a.out ")
 
 (autoload 'markdown-mode "markdown-mode"
    "Major mode for editing Markdown files" t)
