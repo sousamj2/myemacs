@@ -6,6 +6,17 @@
 
 
 * Basic UI configuration
+** Debugger (toggle off/on when needed)
+#+begin_src emacs-lisp
+  ;; (setq use-package-verbose t)
+
+  ;; (advice-add 'require :before
+  ;;             (lambda (feature &rest _)
+  ;;               (when (eq feature 'org)
+  ;;                 (message ">>> ORG IS BEING REQUIRED")
+  ;;                 (backtrace))))
+#+end_src
+
 ** Package loader
 #+begin_src emacs-lisp
   ;; Initialize packages sources
@@ -26,6 +37,17 @@
   (require 'use-package)
   (setq use-package-always-ensure t)
 
+#+end_src
+*** Auto update packages
+#+begin_src emacs-lisp
+  (use-package auto-package-update
+    :custom
+    (auto-package-update-interval 7)
+    (auto-package-update-prompt-before-update t)
+    (auto-package-update-hide-results t)
+    :config
+    (auto-package-update-maybe)
+    (auto-package-update-at-time "09:00"))
 #+end_src
 ** Initial setup
 *** Disable menus
@@ -49,11 +71,12 @@
 #+begin_src emacs-lisp
   (global-display-line-numbers-mode t)
 
-  (dolist (mode '(org-mode-hook
-  		term-mode-hook
-  		shell-mode-hook
-  		treemacs-mode-hook
-  		eshell-mode-hook))
+  (dolist (mode
+  	 '(org-mode-hook
+  	   term-mode-hook
+  	   shell-mode-hook
+  	   treemacs-mode-hook
+  	   eshell-mode-hook))
     (add-hook mode (lambda () (display-line-numbers-mode 0))))
     #+end_src
 
@@ -264,12 +287,15 @@ It includes the CTRL-s as swiper to replace the normal search.
   	 ("C-k" . ivy-next-line)
   	 ("C-d" . ivy-reverse-i-search-kill))
     :config
+    (message "Ivy got loaded from [%s]."
+  	   (or load-file-name buffer-file-name))
     (ivy-mode 1))
 #+end_src
 *** TODO Ivy rich
-Need to add documentation
+Add documentation to the ivy (on the right side)
 #+begin_src emacs-lisp
   (use-package ivy-rich
+    :after ivy
     :init
     (ivy-rich-mode 1))
 #+end_src
@@ -283,17 +309,33 @@ To be used after Ivy
   	 ("C-x C-f" . counsel-find-file)
   	 :map minibuffer-local-map
   	 ("C-r" . counsel-minibuffer-history))
-    :config 
+    :config
+    (message "Counsel loaded from [%s]."
+	   (or load-file-name buffer-file-name))
     (setq ivy-initial-inputs-alist nil)) ;; Don't start searches with ^
 
+#+end_src
+*** Improved sorting with prescient
+Order ivy based on recent / frequent used items
+#+begin_src emacs-lisp
+  (use-package ivy-prescient
+    :after counsel
+    :custom
+    (ivy-prescient-enable-filtering nil)
+    :config
+    ;; Uncomment the following line to have sorting remember across sessions
+    ;; (prescient-persist-mode 1)
+    (ivy-prescient-mode 1)
+    )
 #+end_src
 *** Which key
 Tells what are the next keys combinations
 #+begin_src emacs-lisp
   (use-package which-key
-    :init (which-key-mode)
+    :defer 0
     :diminish which-key-mode
     :config
+    (which-key-mode)
     (setq which-key-idle-delay 2))
 
 #+end_src
@@ -301,6 +343,7 @@ Tells what are the next keys combinations
 Basically describes with more detail what each thing does.
 #+begin_src emacs-lisp
   (use-package helpful
+    :commands (helpful-callable helpful-variable helpful-command helpful-key)
     :ensure t
     :custom
     (counsel-describe-function-function #'helpful-callable)
@@ -338,7 +381,8 @@ Basically describes with more detail what each thing does.
 
 *** command-log-mode
 #+begin_src emacs-lisp
-  (use-package command-log-mode)
+  (use-package command-log-mode
+    :commands command-log-mode)
 #+end_src
 ** Config edit reload
 *** edit
@@ -350,18 +394,20 @@ Basically describes with more detail what each thing does.
 #+end_src
 *** reload config
 #+begin_src emacs-lisp
-  (defun config-reload ()
-    (interactive)
-    (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
   (with-eval-after-load 'org
-    (bind-key "C-c r" 'config-reload))
-
+    ;; Reload only when I am in the config.org file.
+    (defun config-reload ()
+      (interactive)
+      (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
+    (with-eval-after-load 'org
+      (bind-key "C-c r" 'config-reload)))
 #+end_src
 * General
 ** Hydra
 Allows for faster repeated actions.
 #+begin_src emacs-lisp
-  (use-package hydra)
+    (use-package hydra
+      :defer t)
 #+end_src
 ** Personal menus CTRL+TAB
 *** hydra setup for scale in/out
@@ -398,19 +444,34 @@ Allows for faster repeated actions.
 ** Terminals
 *** Close terminal buffer on exit config
 #+begin_src emacs-lisp
+  ;; (defvar my-term-shell "/bin/bash")
+
+  ;; (defun my-ansi-term-exit (process event)
+  ;;   (when (memq (process-status process) '(exit signal))
+  ;;     (let ((buffer (process-buffer process)))
+  ;;       (let ((process (get-buffer-process (current-buffer))))
+  ;; 	(when process
+  ;;           (set-process-sentinel process #'my-ansi-term-exit))))))
+
+  ;; (add-hook 'term-exec-hook #'my-ansi-term-setup)
+
+
+
   (defvar my-term-shell "/bin/bash")
 
   (defun my-ansi-term-exit (process event)
     (when (memq (process-status process) '(exit signal))
       (let ((buffer (process-buffer process)))
-        ;; (global-set-key [f3] 'shell)
-        (global-set-key (kbd "<s-f3>") 'start-kbd-macro)
-        (global-set-key (kbd "<s-f4>") 'end-kbd-macro)
-        (let ((process (get-buffer-process (current-buffer))))
-  	(when process
-            (set-process-sentinel process #'my-ansi-term-exit))))))
+        (when (buffer-live-p buffer)
+          (kill-buffer buffer)))))
+
+  (defun my-ansi-term-setup ()
+    (let ((process (get-buffer-process (current-buffer))))
+      (when process
+        (set-process-sentinel process #'my-ansi-term-exit))))
 
   (add-hook 'term-exec-hook #'my-ansi-term-setup)
+
   #+end_src
 *** ansi-terminal
 Using ansi-terminal
@@ -510,6 +571,12 @@ Allows to search within our projects (mine are within ~/work/ folder)
 This used counsel to iterate in the projects menu
 #+begin_src emacs-lisp
   (use-package counsel-projectile
+    :after (projectile)
+    :commands
+    (counsel-projectile-find-file ; C-x C-f
+     counsel-projectile-switch-project 
+     counsel-projectile-rg
+     counsel-projectile-grep)
     :config (counsel-projectile-mode))
 #+end_src
 ** MaGit
@@ -544,9 +611,11 @@ It will take some time to understand the key bindings of magit but hopefully it 
     (winum-mode))
 #+end_src
 * Org mode configuration
+
 ** Setup functions
 #+begin_src emacs-lisp
   (defun mj/org-mode-setup ()
+    (message "Calling my org setup")
     (org-indent-mode)
     (variable-pitch-mode 1)
     (visual-line-mode 1))
@@ -570,8 +639,11 @@ It will take some time to understand the key bindings of magit but hopefully it 
 ** Start configuration
 #+begin_src emacs-lisp
   (use-package org
+    :pin org
     :hook (org-mode . mj/org-mode-setup)
     :config
+    (message "Org mode loaded from [%s]."
+	   (or load-file-name buffer-file-name))
     (setq org-ellipsis " ↓"
       	org-hide-emphasis-markers t)
 
@@ -694,10 +766,21 @@ It will take some time to understand the key bindings of magit but hopefully it 
 
 #+end_src
 
-** TODO org-tempo
-Need to check again what is this
+** org-tempo
+Allows to start the source block with ==<==. For example:
+==<el== + ==TAB== creates the source block for emacs lisp.
 #+begin_src emacs-lisp
-  (require 'org-tempo)
+  (with-eval-after-load 'org
+    (require 'org-tempo)
+
+    (setq org-src-window-setup 'current-window)
+    (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
+    (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+    (add-to-list 'org-structure-template-alist '("py" . "src python"))
+    (add-to-list 'org-structure-template-alist '("cc" . "src C"))
+    (add-to-list 'org-structure-template-alist '("cp" . "src cpp"))
+    (add-to-list 'org-structure-template-alist '("cfu" . "src conf-unix"))
+    )
 #+end_src
 ** Fixed pitch fonts
 Some times we want to keep the mono size (all letter same width) in the org. Mainly to be used in code blocks.
@@ -713,11 +796,6 @@ Some times we want to keep the mono size (all letter same width) in the org. Mai
   ;; (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch)
 
 #+end_src
-** Sizes of headings
-Is Cantarell the font I want to use ?
-#+begin_src emacs-lisp
-
-#+end_src
 ** Other something
 #+begin_src emacs-lisp
   (defun mj/org-mode-visual-fill () 
@@ -729,44 +807,56 @@ Is Cantarell the font I want to use ?
     :hook (org-mode . mj/org-mode-visual-fill))
 
 #+end_src
-** Org structure
-#+begin_src emacs-lisp
-    (setq org-src-window-setup 'current-window)
-  (add-to-list 'org-structure-template-alist '("sh" . "src shell"))
-  (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-  (add-to-list 'org-structure-template-alist '("py" . "src python"))
-  (add-to-list 'org-structure-template-alist '("cc" . "src C"))
-  (add-to-list 'org-structure-template-alist '("cp" . "src cpp"))
-  (add-to-list 'org-structure-template-alist '("cfu" . "src conf-unix"))
-#+end_src
 ** Configure babel languages
 #+begin_src emacs-lisp
+  (with-eval-after-load 'org
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)
      (python . t)))
 
   (push '(conf-unix . conf-unix) org-src-lang-modes)
+  )
 #+end_src
 
 ** Auto-tangle config files 
 #+begin_src emacs-lisp
   ;; Automatically tangle our emacs.org config file when we save it
+  ;; (defun mj/org-babel-tangle-config ()
+  ;;   (when (and buffer-file-name
+  ;;   	     (string-equal (buffer-file-name)
+  ;;     			   (expand-file-name "~/.emacs.d/config.org"))
+  ;;              ;; Dynamic scoping to the rescue
+  ;;              (let ((org-confirm-babel-evaluate nil))
+  ;;                (org-babel-tangle)))))
+  ;; (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'mj/org-babel-tangle-config)))
+
+
   (defun mj/org-babel-tangle-config ()
+    "Tangle config.org after saving it."
     (when (and buffer-file-name
-    	     (string-equal (buffer-file-name)
-      			   (expand-file-name "~/.emacs.d/config.org"))
-               ;; Dynamic scoping to the rescue
-               (let ((org-confirm-babel-evaluate nil))
-                 (org-babel-tangle)))))
-  (add-hook 'after-save-hook #'mj/org-babel-tangle-config)
+               (string-equal
+                (file-truename buffer-file-name)
+                (file-truename "~/.emacs.d/config.org")))
+      (org-babel-tangle)))
+
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (when (and buffer-file-name
+                         (string-equal
+                          (file-truename buffer-file-name)
+                          (file-truename "~/.emacs.d/config.org")))
+                (add-hook 'after-save-hook
+                          #'mj/org-babel-tangle-config
+                          nil
+                          t))))
 #+end_src 
+
 ** Org bullets
 Gets better looking bullets
 #+begin_src emacs-lisp
   (use-package org-bullets
-    :ensure t
-  					;    :after org
+;    :ensure t
     :hook (org-mode . org-bullets-mode)
   					;    :custom
   					;    (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●"))
@@ -888,6 +978,48 @@ This is not the compiler clang. In fact I will be using gcc instead for compilat
     :custom
     ((dired-listing-switches "-agho --group-directories-first"))
     )
+
+   (with-eval-after-load 'dired
+      ;; When entering a subdirectory, kill the previous Dired buffer.
+      (setq dired-kill-when-opening-new-dired-buffer t)
+
+      ;; Use '\' instead of '^' to go to the parent directory.
+      (define-key dired-mode-map (kbd "\\") #'dired-up-directory))
+
+  (use-package dired-open
+    :config
+    (setq dired-open-extensions '(("png" . "eog")
+  				("jpg" . "eog")
+  				("pdf" . "evince"))))
+
+  (use-package dired-hide-dotfiles
+    :hook (dired-mode . dired-hide-dotfiles-mode)
+    :bind ("C-." . dired-hide-dotfiles-mode))
+#+end_src
+* Dashboard and start up
+** Startup
+#+begin_src emacs-lisp
+  (defun mj/display-startup-time ()
+    (message "My livEmacs loaded in %s with %d garbage collections."
+  	   (format "%.2f seconds"
+  		   (float-time
+  		    (time-subtract after-init-time before-init-time)))
+  	   gcs-done))
+
+  (add-hook 'emacs-startup-hook #'mj/display-startup-time)
+#+end_src
+** Dashboard
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook)
+        (setq dashboard-startup-banner
+          (expand-file-name "images/livEmacs.png"
+                            user-emacs-directory))
+    (setq dashboard-items '((recents . 5)))
+    (setq dashboard-banner-logo-title "Welcome to my livEmacs!")
+    )
 #+end_src
 * My personal aliases
 ** [F3] Open terminal
@@ -994,12 +1126,20 @@ I might revert this to the make command instead in the near future.
 #+end_src
 ** Add 42 logo to project to pass the norminette.
 #+begin_src emacs-lisp
+  (defvar mj/42-loaded nil)
 
-  (load "~/.emacs.d/el42/list.el")
-  (load "~/.emacs.d/el42/string.el")
-  (load "~/.emacs.d/el42/comments.el")
-  (load "~/.emacs.d/el42/header.el")
-  (global-set-key (kbd "<C-f1>") 'header-insert)
+  (defun mj/load-42 ()
+    "Load my 42 emacs extensions once."
+    (unless mj/42-loaded
+      (load "~/.emacs.d/el42/list.el")
+      (load "~/.emacs.d/el42/string.el")
+      (load "~/.emacs.d/el42/comments.el")
+      (load "~/.emacs.d/el42/header.el")
+      (global-set-key (kbd "<C-f1>") 'header-insert)
+      (setq mj/42-loaded t)))
+
+  (add-hook 'c-mode-hook #'mj/load-42)
+  (add-hook 'c++-mode-hook #'mj/load-42)
 #+end_src
 ** Process tabs in function and variable declaration.
 #+begin_src emacs-lisp
