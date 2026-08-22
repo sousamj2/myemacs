@@ -6,6 +6,11 @@
 
 
 * Basic UI configuration
+
+** Increase the memory for the initialization
+#+begin_src emacs-lisp
+  (setq gc-cons-threshold (* 8 1000 1000))
+#+end_src
 ** Debugger (toggle off/on when needed)
 #+begin_src emacs-lisp
   ;; (setq use-package-verbose t)
@@ -528,88 +533,6 @@ This binds the macro for future sessions
 
 * Minor settings
 
-* Projects and git
-** Projectile package "CTRL+c p"
-Allows to search within our projects (mine are within ~/work/ folder)
-#+begin_src emacs-lisp
-  (use-package projectile
-    :diminish projectile-mode
-    :config (projectile-mode)
-    :custom
-    ((projectile-completion-system 'ivy)
-     (projectile-globally-ignored-directories
-      '(".git"
-        "__pycache__"
-        ".pytest_cache"
-        ".venv"
-        "venv"
-        "build"
-        "CMakeFiles"
-        "dist"
-        "bin"))
-     (projectile-globally-ignored-file-suffixes
-      '(".o" ; object files
-        ".a" ; static libraries
-        ".so" ; dinamic libraries
-        ".pyc" ; python compilation
-        ".pyo" ; python objects
-        ".class" ; C++ classes
-        ))
-     (projectile-global-ignore-file-patterns
-      '("~$" ; emacs backup saves
-        "#.*#$" ; emacs auto saves
-        )))
-    :bind-keymap
-    ("C-c p" . projectile-command-map)
-    :init
-    (when (file-directory-p "~/work/")
-      (setq projectile-project-search-path '("~/work/")))
-    (setq projectile-switch-project-action #'projectile-dired))
-
-#+end_src
-** counsel-projectile
-This used counsel to iterate in the projects menu
-#+begin_src emacs-lisp
-  (use-package counsel-projectile
-    :after (projectile)
-    :commands
-    (counsel-projectile-find-file ; C-x C-f
-     counsel-projectile-switch-project 
-     counsel-projectile-rg
-     counsel-projectile-grep)
-    :config (counsel-projectile-mode))
-#+end_src
-** MaGit
-It will take some time to understand the key bindings of magit but hopefully it will make my life easier.
-#+begin_src emacs-lisp
-  (use-package magit
-    :commands (magit-status magit-get-current-branch)
-    :custom
-    (nagit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
-#+end_src
-** Treemacs
-*** Setup treemacs
-#+begin_src emacs-lisp
-  (use-package treemacs
-    :ensure t
-    :bind ("s-t" . treemacs))
-#+end_src
-*** Setup winum with treemacs
-#+begin_src emacs-lisp
-  (use-package winum
-    :ensure
-    :config
-    (global-set-key (kbd "M-0") 'treemacs-select-window)
-    (global-set-key (kbd "M-1") 'winum-select-window-1)
-    (global-set-key (kbd "M-2") 'winum-select-window-2)
-    (global-set-key (kbd "M-3") 'winum-select-window-3)
-    (global-set-key (kbd "M-4") 'winum-select-window-4)
-    (global-set-key (kbd "M-5") 'winum-select-window-5)
-    (global-set-key (kbd "M-6") 'winum-select-window-6)
-    (global-set-key (kbd "M-7") 'winum-select-window-7)
-    (global-set-key (kbd "M-8") 'winum-select-window-8)
-    (winum-mode))
-#+end_src
 * Org mode configuration
 
 ** Setup functions
@@ -874,7 +797,59 @@ Not sure yet how to use this...
 #+end_src
 * Auto complete LSP
 ** Development
+** Debuggin with dap-mode
+#+begin_src emacs-lisp
+  (use-package dap-mode
+    ;; Uncomment the config bellow if you want all UI panes to be hidden by default!
+    ;; :custom
+    ;; (lsp-enable-dap-auto-configure nil)
+    ;; :config
+    ;; (dap-ui-mode 1)
+    :commands dap-debug
+    :config
+    ;; Set up Node debugging (maybe later)
+
+    ;; Bind C-c l d to dap-hydra for easy access
+    (general-define-key
+     :keymaps 'lsp-mode-map
+     :prefix lsp-keymap-prefix
+     "d" '(dap-hydra t :wk "debugger")))
+#+end_src
 ** Languages
+*** Python
+We use ==lsp-mode== and ==dao-mode== to provide a more complete development for Python in Emacs.
+Check out the ==pyls== configuration in the ==lsp-mode== documentation for more details.
+
+Make sure you have the ==pyls== language server installed before trying ==lsp-mode== !
+
+#+begin_src shell :tangle no
+pip install --user "python-language-server[all]"
+#+end_src
+
+There are a numver of other languages for Python so if you find that ==pyls== does not work, consult the ==lsp-mode== language configuration documentation to try the others.
+
+#+begin_src emacs-lisp
+  (use-package python-mode
+    :ensure t
+    :hook (python-mode . lsp-deferred)
+    :custom
+    ;; Note: set if python 3 is called "python3" in your system.
+    ;; (python-shell-interpreter "python3")
+    ;; (dap-python-executable "python3")
+    (dap-python-debugger 'debugpy)
+    :config
+    (require 'dap-python)
+    )
+#+end_src
+
+You can use the pyvenv package to use the ==virtualenv== enviroment in emacs. The ==pyvenv-activate== commadn shoudl configure emacs to cause ==lsp-more== and ==dap-mode== to use the virtual enviroment when they are loaded, just select the path to your virtual enviroment before loading your project.
+
+#+begin_src emacs-lisp
+  (use-package pyvenv
+    :after python-mode
+    :config
+    (pyvenv-mode 1))
+#+end_src
 ** Company auto complete
 Default configuration
 #+begin_src emacs-lisp
@@ -965,9 +940,98 @@ This is not the compiler clang. In fact I will be using gcc instead for compilat
 
   (global-set-key (kbd "C-<f4>") #'my/flymake-toggle-diagnostics)
 #+end_src
-** Quick words seaching across project (not working)
+** Quick words seaching across project (not working?)
 #+begin_src emacs-lisp
-;  (use-package lsp-ivy)
+  (use-package lsp-ivy
+    :after lsp)
+#+end_src
+* Projects and git
+** Projectile package "CTRL+c p"
+Allows to search within our projects (mine are within ~/work/ folder)
+#+begin_src emacs-lisp
+  (use-package projectile
+    :diminish projectile-mode
+    :config (projectile-mode)
+    :custom
+    ((projectile-completion-system 'ivy)
+     (projectile-globally-ignored-directories
+      '(".git"
+        "__pycache__"
+        ".pytest_cache"
+        ".venv"
+        "venv"
+        "build"
+        "CMakeFiles"
+        "dist"
+        "bin"))
+     (projectile-globally-ignored-file-suffixes
+      '(".o" ; object files
+        ".a" ; static libraries
+        ".so" ; dinamic libraries
+        ".pyc" ; python compilation
+        ".pyo" ; python objects
+        ".class" ; C++ classes
+        ))
+     (projectile-global-ignore-file-patterns
+      '("~$" ; emacs backup saves
+        "#.*#$" ; emacs auto saves
+        )))
+    :bind-keymap
+    ("C-c p" . projectile-command-map)
+    :init
+    (when (file-directory-p "~/work/")
+      (setq projectile-project-search-path '("~/work/")))
+    (setq projectile-switch-project-action #'projectile-dired))
+
+#+end_src
+** counsel-projectile
+This used counsel to iterate in the projects menu
+#+begin_src emacs-lisp
+  (use-package counsel-projectile
+    :after (projectile)
+    :commands
+    (counsel-projectile-find-file ; C-x C-f
+     counsel-projectile-switch-project 
+     counsel-projectile-rg
+     counsel-projectile-grep)
+    :config (counsel-projectile-mode))
+#+end_src
+** MaGit
+It will take some time to understand the key bindings of magit but hopefully it will make my life easier.
+#+begin_src emacs-lisp
+  (use-package magit
+    :commands (magit-status magit-get-current-branch)
+    :custom
+    (nagit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
+
+  ;; Note: Make sure to configure a GitHub token before using this package!
+  ;; - https://magic.vc/manual/forge/Token-Creation.html
+  ;; - https://magic.vc/manual/ghub/Getting-Started.html
+  (use-package forge
+    :after magit)
+#+end_src
+** Treemacs
+*** Setup treemacs
+#+begin_src emacs-lisp
+  (use-package treemacs
+    :ensure t
+    :bind ("s-t" . treemacs))
+#+end_src
+*** Setup winum with treemacs
+#+begin_src emacs-lisp
+  (use-package winum
+    :ensure
+    :config
+    (global-set-key (kbd "M-0") 'treemacs-select-window)
+    (global-set-key (kbd "M-1") 'winum-select-window-1)
+    (global-set-key (kbd "M-2") 'winum-select-window-2)
+    (global-set-key (kbd "M-3") 'winum-select-window-3)
+    (global-set-key (kbd "M-4") 'winum-select-window-4)
+    (global-set-key (kbd "M-5") 'winum-select-window-5)
+    (global-set-key (kbd "M-6") 'winum-select-window-6)
+    (global-set-key (kbd "M-7") 'winum-select-window-7)
+    (global-set-key (kbd "M-8") 'winum-select-window-8)
+    (winum-mode))
 #+end_src
 * Dired setup
 #+begin_src emacs-lisp
@@ -987,6 +1051,7 @@ This is not the compiler clang. In fact I will be using gcc instead for compilat
       (define-key dired-mode-map (kbd "\\") #'dired-up-directory))
 
   (use-package dired-open
+    :after dired
     :config
     (setq dired-open-extensions '(("png" . "eog")
   				("jpg" . "eog")
@@ -1230,3 +1295,9 @@ I might revert this to the make command instead in the near future.
               (delete-horizontal-space)
               (insert "\t")))))))
 #+end_src
+* Revert back to lower memory after init
+** Decrease the memory after the initialization
+#+begin_src emacs-lisp
+  (setq gc-cons-threshold (* 2 1000 1000))
+#+end_src
+
