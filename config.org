@@ -60,7 +60,7 @@
   (scroll-bar-mode -1) ; disable visible scrollbar
   (tool-bar-mode -1)   ; disable the tool bar
   (tooltip-mode -1)    ; disable tool tips
-  (menu-bar-mode 1)   ; disable the menu bar
+  (menu-bar-mode -1)   ; disable the menu bar
 #+end_src
 *** Disable startup message from emacs (tutorial, etc)
 #+begin_src emacs-lisp
@@ -71,6 +71,7 @@
   (set-fringe-mode 10) ; Give some breathing room
   (setq visible-bell t)
   (column-number-mode) ; show the column number
+  (save-place-mode 1) ; save the cursor place after emacs finishes
 #+end_src
 *** Show line number on the left (remove some of the modes)
 #+begin_src emacs-lisp
@@ -126,15 +127,15 @@ At top and bottom it does not jump a frame
 #+end_src
 *** Parenthesis electrical
 #+begin_src emacs-lisp
-  (setq electric-pair-pairs '(
-  			    (?\( . ?\) )
-  			    (?\[ . ?\] )
-  			    (?\{ . ?\} )
-  			    (?\" . ?\" )
-  			    ))
-  (modify-syntax-entry ?< ".")
-  (modify-syntax-entry ?> ".")
-  (electric-pair-mode t)
+  ;; (setq electric-pair-pairs '(
+  ;; 			    (?\( . ?\) )
+  ;; 			    (?\[ . ?\] )
+  ;; 			    (?\{ . ?\} )
+  ;; 			    (?\" . ?\" )
+  ;; 			    ))
+  ;; (modify-syntax-entry ?< ".")
+  ;; (modify-syntax-entry ?> ".")
+  (electric-pair-mode t) 
 #+end_src
 *** TODO hungry-delete
 There might be a way to toogle the behaviour but did not find. If not useful, we can always manually disable it.
@@ -142,8 +143,7 @@ There might be a way to toogle the behaviour but did not find. If not useful, we
   (use-package hungry-delete
     :ensure t
     :config (global-hungry-delete-mode)
-    ;; :bind
-    ;; ("C-«" . c-toogle-hungry-state)
+      (define-key global-map (kbd "C-«") #'global-hungry-delete-mode)
     )
 #+end_src
 *** Beacon
@@ -387,7 +387,12 @@ Basically describes with more detail what each thing does.
 *** command-log-mode
 #+begin_src emacs-lisp
   (use-package command-log-mode
-    :commands command-log-mode)
+    :commands command-log-mode
+    :config
+    (add-hook 'command-log-mode-hook
+              (lambda ()
+                (when command-log-mode
+                  (message "Command-log-mode enabled — use M-x clm/open-command-log-buffer to view it.")))))
 #+end_src
 ** Config edit reload
 *** edit
@@ -853,45 +858,48 @@ You can use the pyvenv package to use the ==virtualenv== enviroment in emacs. Th
 ** Company auto complete and YASnippets
 Default configuration
 #+begin_src emacs-lisp
-    (use-package company
-      :after lsp-mode
-      :hook (lsp-mode . company-mode)
+        (use-package company
+          :after lsp-mode
+          :hook (lsp-mode . company-mode)
+  ;        (message "Company: starting.")
+          :bind
+          (:map company-active-map
+                ("TAB" . company-complete-selection))
+          (:map lsp-mode-map
+                ("TAB" . company-indent-or-complete-common))
+  ;        (message "Company: bind \"TAB\" to company")
+          :custom
+          (company-minimum-prefix-length 2)
+          (company-idle-delay 2)
 
-      :bind
-      (:map company-active-map
-            ("TAB" . company-complete-selection))
-      (:map lsp-mode-map
-            ("TAB" . company-indent-or-complete-common))
+          :config
+          (define-key company-active-map (kbd "<tab>") nil)
+          (define-key company-active-map (kbd "<backtab>") nil)
+          (message "Company: config <tab> and <backtab> reset.")
+          
+          (setq company-backends
+                '((company-capf)))
+          (message "Company: finish loading.")
+          )
+      ;             company-yasnippet))))
+        
+        ;; ;;; Company
+        ;; (use-package company
+        ;;   :after lsp-mode
+        ;;   :hook (lsp-mode . company-mode)
 
-      :custom
-      (company-minimum-prefix-length 2)
-      (company-idle-delay 2)
+        ;;   :bind
+        ;;   (:map company-active-map
+        ;;         ("<tab>" . company-complete-selection))
 
-      :config
-      (define-key company-active-map (kbd "<tab>") nil)
-      (define-key company-active-map (kbd "<backtab>") nil)
+        ;;   :custom
+        ;;   (company-minimum-prefix-length 2)
+        ;;   (company-idle-delay 0.2)
 
-      (setq company-backends
-            '((company-capf))))
-  ;             company-yasnippet))))
-    
-    ;; ;;; Company
-    ;; (use-package company
-    ;;   :after lsp-mode
-    ;;   :hook (lsp-mode . company-mode)
-
-    ;;   :bind
-    ;;   (:map company-active-map
-    ;;         ("<tab>" . company-complete-selection))
-
-    ;;   :custom
-    ;;   (company-minimum-prefix-length 2)
-    ;;   (company-idle-delay 0.2)
-
-    ;;   :config
-    ;;   (setq company-backends
-    ;;         '((company-capf
-    ;;            company-yasnippet))))
+        ;;   :config
+        ;;   (setq company-backends
+        ;;         '((company-capf
+        ;;            company-yasnippet))))
 #+end_src
 
 ==yasnippets== and ==yasnippets snippets==
@@ -900,27 +908,34 @@ Default configuration
       (use-package yasnippet
         :ensure t
         :defer t
-        ; :hook (prog-mode . yas-minor-mode)
-        :commands yas-expand
+        :hook (prog-mode . yas-minor-mode)
+        ;; :commands yas-expand
+  ;      (message "yasnippet: starting with prog-mode.")
         :custom
         (yas-snippet-dirs '("~/.emacs.d/snippets_mine/"))
+        (message "yasnippet: setup with snippets_mine.")
         :config
         ;; Don't let yas grab TAB: shift-tab expands the stippets + next
         (define-key yas-minor-mode-map (kbd "<tab>") nil)
         (define-key yas-minor-mode-map (kbd "TAB") nil)
         (define-key yas-minor-mode-map
-                  (kbd "<backtab>")  yas-maybe-expand)
+    		(kbd "<backtab>")  yas-maybe-expand)
+        (message "yasnippet: removed \"TAB\" and <tab> from starting snippets: Using <backtab>.")
         (define-key yas-keymap [(tab)] nil)
         (define-key yas-keymap (kbd "TAB") nil)
+        (message "yasnippet: removed [(tab)] and \"TAB\" from iterating snippets options.")
         (define-key yas-keymap
                   (kbd "<tab>")
                   (yas-filtered-definition
                    'yas-next-field-or-maybe-expand))
-       (define-key yas-keymap
-  		(kbd "<backtab>")
-  		(yas-filtered-definition
-  		 'yas-prev-field))
-        (yas-global-mode 1))
+        (define-key yas-keymap
+    		(kbd "<backtab>")
+    		(yas-filtered-definition
+    		 'yas-prev-field))
+        (message "yasnippet: iterating with snippets: <tab>/<backtab> for next/prev, respectively.")
+        (yas-global-mode 1)
+        (message "yasnippet: finishing loading.")
+        )
 
 
     ;; ;;; Load YASnippet when Company becomes active
