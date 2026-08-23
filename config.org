@@ -60,7 +60,7 @@
   (scroll-bar-mode -1) ; disable visible scrollbar
   (tool-bar-mode -1)   ; disable the tool bar
   (tooltip-mode -1)    ; disable tool tips
-  (menu-bar-mode -1)   ; disable the menu bar
+  (menu-bar-mode 1)   ; disable the menu bar
 #+end_src
 *** Disable startup message from emacs (tutorial, etc)
 #+begin_src emacs-lisp
@@ -795,7 +795,7 @@ Not sure yet how to use this...
 #+begin_src emacs-lisp
 
 #+end_src
-* Auto complete LSP
+* Auto complete and LSP
 ** Development
 ** Debuggin with dap-mode
 #+begin_src emacs-lisp
@@ -850,23 +850,103 @@ You can use the pyvenv package to use the ==virtualenv== enviroment in emacs. Th
     :config
     (pyvenv-mode 1))
 #+end_src
-** Company auto complete
+** Company auto complete and YASnippets
 Default configuration
 #+begin_src emacs-lisp
-  (use-package company
-    :after lsp-mode
-    :hook (lsp-mode . company-mode)
-    :bind
-    (:map company-active-map
-  	      ("<tab>" . company-complete-selection))
-    (:map lsp-mode-map
-  	("<tab>" . company-indent-or-complete-common))
-    :custom
-    (company-minimum-prefix-lenght 2)
-    (company-idle-delay 0.2)
-  :config
-  (setq company-backend ' ((company-capf)))
-    )
+    (use-package company
+      :after lsp-mode
+      :hook (lsp-mode . company-mode)
+
+      :bind
+      (:map company-active-map
+            ("TAB" . company-complete-selection))
+      (:map lsp-mode-map
+            ("TAB" . company-indent-or-complete-common))
+
+      :custom
+      (company-minimum-prefix-length 2)
+      (company-idle-delay 2)
+
+      :config
+      (define-key company-active-map (kbd "<tab>") nil)
+      (define-key company-active-map (kbd "<backtab>") nil)
+
+      (setq company-backends
+            '((company-capf))))
+  ;             company-yasnippet))))
+    
+    ;; ;;; Company
+    ;; (use-package company
+    ;;   :after lsp-mode
+    ;;   :hook (lsp-mode . company-mode)
+
+    ;;   :bind
+    ;;   (:map company-active-map
+    ;;         ("<tab>" . company-complete-selection))
+
+    ;;   :custom
+    ;;   (company-minimum-prefix-length 2)
+    ;;   (company-idle-delay 0.2)
+
+    ;;   :config
+    ;;   (setq company-backends
+    ;;         '((company-capf
+    ;;            company-yasnippet))))
+#+end_src
+
+==yasnippets== and ==yasnippets snippets==
+#+begin_src emacs-lisp
+      ;;; YASnippet
+      (use-package yasnippet
+        :ensure t
+        :defer t
+        ; :hook (prog-mode . yas-minor-mode)
+        :commands yas-expand
+        :custom
+        (yas-snippet-dirs '("~/.emacs.d/snippets_mine/"))
+        :config
+        ;; Don't let yas grab TAB: shift-tab expands the stippets + next
+        (define-key yas-minor-mode-map (kbd "<tab>") nil)
+        (define-key yas-minor-mode-map (kbd "TAB") nil)
+        (define-key yas-minor-mode-map
+                  (kbd "<backtab>")  yas-maybe-expand)
+        (define-key yas-keymap [(tab)] nil)
+        (define-key yas-keymap (kbd "TAB") nil)
+        (define-key yas-keymap
+                  (kbd "<tab>")
+                  (yas-filtered-definition
+                   'yas-next-field-or-maybe-expand))
+       (define-key yas-keymap
+  		(kbd "<backtab>")
+  		(yas-filtered-definition
+  		 'yas-prev-field))
+        (yas-global-mode 1))
+
+
+    ;; ;;; Load YASnippet when Company becomes active
+    ;; (defun my-company-load-yasnippet ()
+    ;;   "Load and enable YASnippet when Company becomes active."
+    ;;   (require 'yasnippet)
+    ;;   (yas-global-mode 1))
+    #+end_src
+
+Special function to handle [TAB]
+#+begin_src emacs-lisp
+  ;; ;;; TAB handling
+  ;; (defun my-company-tab ()
+  ;;   "Handle TAB for Company and YASnippet."
+  ;;   (interactive)
+  ;;   (cond
+  ;;    ;; Company completion popup is active.
+  ;;    ((company--active-p)
+  ;;     (company-complete-selection))
+
+  ;;    ;; A YASnippet can be expanded here.
+  ;;    ((yas-maybe-expand))
+
+  ;;    ;; Otherwise perform normal indentation.
+  ;;    (t
+  ;;     (indent-for-tab-command))))
 #+end_src
 
 Box config
@@ -887,6 +967,8 @@ Lsp-mode is the client (emacs) - server application.
     (lsp-enable-which-key-integration t)
     (setq lsp-enable-on-type-formatting nil)
     (setq lsp-enable-indentation nil)
+    (define-key lsp-mode-map (kbd "<tab>") nil)
+    (define-key lsp-mode-map (kbd "<backtab>") nil)
     )
 #+end_src
 *** Better UI for LSP
@@ -1153,11 +1235,11 @@ M-n breaks with company. Attemped map with C-q (closer with the pinky-emacs chec
 #+end_src
 ** Ctrl+I as backtab (shift+tab)
 #+begin_src emacs-lisp
-  (defun mj/insert-tab ()
-    "Insert a literal TAB char"
-    (interactive)
-    (insert "\t"))
-  (global-set-key (kbd "<backtab>") #'mj/insert-tab)
+  ;; (defun mj/insert-tab ()
+  ;;   "Insert a literal TAB char"
+  ;;   (interactive)
+  ;;   (insert "\t"))
+  ;; (global-set-key (kbd "<backtab>") #'mj/insert-tab)
 #+end_src
 * 42 Configuration
 ** Compilation with cc and warning flags
