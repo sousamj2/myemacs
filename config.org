@@ -3,8 +3,6 @@
 # #+author Mario Sousa
 # #+note https://www.youtube.com/watch?v=74zOY-vgkyw&list=PLEoMzSkcN8oPH1au7H6B7bBJ4ZO7BXjSZ
 
-
-
 * Basic UI configuration
 
 ** Increase the memory for the initialization
@@ -52,7 +50,7 @@
     (auto-package-update-hide-results t)
     :config
     (auto-package-update-maybe)
-    (auto-package-update-at-time "09:00"))
+    (auto-package-update-at-time "19:00"))
 #+end_src
 ** Initial setup
 *** Disable menus
@@ -106,9 +104,9 @@ This will remove the production of backups. I have it commented because it helpe
 #+begin_src emacs-lisp
   (defalias 'yes-or-no-p 'y-or-n-p)
 #+end_src
-*** No bell
+*** No bell --> changed to visible bell
 #+begin_src emacs-lisp
-  					;  (setq ring-bell-function 'ignore)
+  ;  (setq ring-bell-function 'ignore)
 #+end_src
 *** Pretty symbols
 Something to test: not sure I like it.
@@ -127,14 +125,6 @@ At top and bottom it does not jump a frame
 #+end_src
 *** Parenthesis electrical
 #+begin_src emacs-lisp
-  ;; (setq electric-pair-pairs '(
-  ;; 			    (?\( . ?\) )
-  ;; 			    (?\[ . ?\] )
-  ;; 			    (?\{ . ?\} )
-  ;; 			    (?\" . ?\" )
-  ;; 			    ))
-  ;; (modify-syntax-entry ?< ".")
-  ;; (modify-syntax-entry ?> ".")
   (electric-pair-mode t) 
 #+end_src
 *** TODO hungry-delete
@@ -162,7 +152,7 @@ Shows parenthesis with matching colors
 ** Font configuration
 *** Default fonts faces
 #+begin_src emacs-lisp
-  (defvar mj/default-font-size 150)
+  (defvar mj/default-font-size 132)
   (set-face-attribute 'default nil :font "Fira Code Retina" :height mj/default-font-size)
   (set-face-attribute 'fixed-pitch nil :font "Fira Code Retina" :height mj/default-font-size)
   (set-face-attribute 'variable-pitch nil :font "Cantarell" :height 170 :weight 'regular)
@@ -194,10 +184,8 @@ Shows parenthesis with matching colors
     (mapc #'disable-theme custom-enabled-themes)
     (load-theme 'doom-bluloco-dark t)
     (custom-theme-set-faces
-     ;; 'modus-vivendi-tritanopia
      'doom-bluloco-dark
      '(default ((t (:background "#000000"))))))
-  					; (set-face-attribute 'default nil :background "#000000"))
 
   (defun mj/light-theme ()
     "Load my light theme."
@@ -221,33 +209,30 @@ Shows parenthesis with matching colors
 #+end_src
 *** Functions to count number of lines
 #+begin_src emacs-lisp
-    (defun mj/c-function-line-count ()
-      "Return the current C function's line count."
-      (when (derived-mode-p 'c-mode 'c++-mode)
-        (save-excursion
-          (c-beginning-of-defun)
-          (let ((start (point)))
-            (c-end-of-defun)
-            (let ((end (point)))
-              (format " Func:%d/25"
-                      (- (count-lines start end) 3)))))))
+  (defun mj/c-function-line-count ()
+    "Return the current C function's line count."
+    (when (derived-mode-p 'c-mode 'c++-mode)
+      (save-excursion
+        (c-beginning-of-defun)
+        (let ((start (point)))
+          (c-end-of-defun)
+          (let ((end (point)))
+            (format " Func:%d/25"
+                    (- (count-lines start end) 3)))))))
 
-    (doom-modeline-def-segment mj/c-function-lines
-      (mj/c-function-line-count))
+  (doom-modeline-def-segment mj/c-function-lines
+    (mj/c-function-line-count))
 
-    ;; (add-to-list 'doom-modeline-misc-info
-    ;;              'mj/c-function-lines)
+  (doom-modeline-def-modeline 'mj/main
+    '(eldoc bar window-state workspace-name window-number modals matches
+            follow buffer-info remote-host buffer-position word-count
+            parrot selection-info)
+    '(compilation objed-state misc-info mj/c-function-lines
+                  project-name persp-name battery grip irc mu4e gnus github
+                  debug repl lsp minor-modes input-method indent-info
+                  buffer-encoding major-mode process vcs check time))
 
-    (doom-modeline-def-modeline 'mj/main
-      '(eldoc bar window-state workspace-name window-number modals matches
-              follow buffer-info remote-host buffer-position word-count
-              parrot selection-info)
-      '(compilation objed-state misc-info mj/c-function-lines
-                    project-name persp-name battery grip irc mu4e gnus github
-                    debug repl lsp minor-modes input-method indent-info
-                    buffer-encoding major-mode process vcs check time))
-
-    (doom-modeline-set-modeline 'mj/main)
+  (doom-modeline-set-modeline 'mj/main)
 #+end_src
 ** Buffers manipulation and helpers
 *** Split buffers
@@ -296,7 +281,7 @@ It includes the CTRL-s as swiper to replace the normal search.
   	   (or load-file-name buffer-file-name))
     (ivy-mode 1))
 #+end_src
-*** TODO Ivy rich
+*** Ivy rich
 Add documentation to the ivy (on the right side)
 #+begin_src emacs-lisp
   (use-package ivy-rich
@@ -454,19 +439,6 @@ Allows for faster repeated actions.
 ** Terminals
 *** Close terminal buffer on exit config
 #+begin_src emacs-lisp
-  ;; (defvar my-term-shell "/bin/bash")
-
-  ;; (defun my-ansi-term-exit (process event)
-  ;;   (when (memq (process-status process) '(exit signal))
-  ;;     (let ((buffer (process-buffer process)))
-  ;;       (let ((process (get-buffer-process (current-buffer))))
-  ;; 	(when process
-  ;;           (set-process-sentinel process #'my-ansi-term-exit))))))
-
-  ;; (add-hook 'term-exec-hook #'my-ansi-term-setup)
-
-
-
   (defvar my-term-shell "/bin/bash")
 
   (defun my-ansi-term-exit (process event)
@@ -481,7 +453,6 @@ Allows for faster repeated actions.
         (set-process-sentinel process #'my-ansi-term-exit))))
 
   (add-hook 'term-exec-hook #'my-ansi-term-setup)
-
   #+end_src
 *** ansi-terminal
 Using ansi-terminal
@@ -536,10 +507,7 @@ This will give the text to add to emacs-lisp:
 )
 This binds the macro for future sessions	     
 
-* Minor settings
-
 * Org mode configuration
-
 ** Setup functions
 #+begin_src emacs-lisp
   (defun mj/org-mode-setup ()
@@ -707,8 +675,7 @@ Allows to start the source block with ==<==. For example:
     (add-to-list 'org-structure-template-alist '("py" . "src python"))
     (add-to-list 'org-structure-template-alist '("cc" . "src C"))
     (add-to-list 'org-structure-template-alist '("cp" . "src cpp"))
-    (add-to-list 'org-structure-template-alist '("cfu" . "src conf-unix"))
-    )
+    (add-to-list 'org-structure-template-alist '("cfu" . "src conf-unix")))
 #+end_src
 ** Fixed pitch fonts
 Some times we want to keep the mono size (all letter same width) in the org. Mainly to be used in code blocks.
@@ -733,7 +700,6 @@ Some times we want to keep the mono size (all letter same width) in the org. Mai
 
   (use-package visual-fill-column
     :hook (org-mode . mj/org-mode-visual-fill))
-
 #+end_src
 ** Configure babel languages
 #+begin_src emacs-lisp
@@ -749,17 +715,6 @@ Some times we want to keep the mono size (all letter same width) in the org. Mai
 
 ** Auto-tangle config files 
 #+begin_src emacs-lisp
-  ;; Automatically tangle our emacs.org config file when we save it
-  ;; (defun mj/org-babel-tangle-config ()
-  ;;   (when (and buffer-file-name
-  ;;   	     (string-equal (buffer-file-name)
-  ;;     			   (expand-file-name "~/.emacs.d/config.org"))
-  ;;              ;; Dynamic scoping to the rescue
-  ;;              (let ((org-confirm-babel-evaluate nil))
-  ;;                (org-babel-tangle)))))
-  ;; (add-hook 'org-mode-hook (lambda () (add-hook 'after-save-hook #'mj/org-babel-tangle-config)))
-
-
   (defun mj/org-babel-tangle-config ()
     "Tangle config.org after saving it."
     (when (and buffer-file-name
@@ -784,24 +739,12 @@ Some times we want to keep the mono size (all letter same width) in the org. Mai
 Gets better looking bullets
 #+begin_src emacs-lisp
   (use-package org-bullets
-;    :ensure t
     :hook (org-mode . org-bullets-mode)
-  					;    :custom
-  					;    (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●"))
+    ;; :custom
+    ;; (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●"))
     )
 #+end_src
-** todo keywords
-Additional to do words to cycle. Need to figure out how to switch between sequences.
-#+begin_src emacs-lisp
-
-#+end_src
-** Agenda and log config
-Not sure yet how to use this...
-#+begin_src emacs-lisp
-
-#+end_src
 * Auto complete and LSP
-** Development
 ** Debuggin with dap-mode
 #+begin_src emacs-lisp
   (use-package dap-mode
@@ -879,90 +822,40 @@ Default configuration
           
           (setq company-backends
                 '((company-capf)))
-          (message "Company: finish loading.")
-          )
-      ;             company-yasnippet))))
-        
-        ;; ;;; Company
-        ;; (use-package company
-        ;;   :after lsp-mode
-        ;;   :hook (lsp-mode . company-mode)
-
-        ;;   :bind
-        ;;   (:map company-active-map
-        ;;         ("<tab>" . company-complete-selection))
-
-        ;;   :custom
-        ;;   (company-minimum-prefix-length 2)
-        ;;   (company-idle-delay 0.2)
-
-        ;;   :config
-        ;;   (setq company-backends
-        ;;         '((company-capf
-        ;;            company-yasnippet))))
+          (message "Company: finish loading."))
 #+end_src
 
 ==yasnippets== and ==yasnippets snippets==
 #+begin_src emacs-lisp
-      ;;; YASnippet
-      (use-package yasnippet
-        :ensure t
-        :defer t
-        :hook (prog-mode . yas-minor-mode)
-        ;; :commands yas-expand
-  ;      (message "yasnippet: starting with prog-mode.")
-        :custom
-        (yas-snippet-dirs '("~/.emacs.d/snippets_mine/"))
-        (message "yasnippet: setup with snippets_mine.")
-        :config
-        ;; Don't let yas grab TAB: shift-tab expands the stippets + next
-        (define-key yas-minor-mode-map (kbd "<tab>") nil)
-        (define-key yas-minor-mode-map (kbd "TAB") nil)
-        (define-key yas-minor-mode-map
-    		(kbd "<backtab>")  yas-maybe-expand)
-        (message "yasnippet: removed \"TAB\" and <tab> from starting snippets: Using <backtab>.")
-        (define-key yas-keymap [(tab)] nil)
-        (define-key yas-keymap (kbd "TAB") nil)
-        (message "yasnippet: removed [(tab)] and \"TAB\" from iterating snippets options.")
-        (define-key yas-keymap
-                  (kbd "<tab>")
-                  (yas-filtered-definition
-                   'yas-next-field-or-maybe-expand))
-        (define-key yas-keymap
-    		(kbd "<backtab>")
-    		(yas-filtered-definition
-    		 'yas-prev-field))
-        (message "yasnippet: iterating with snippets: <tab>/<backtab> for next/prev, respectively.")
-        (yas-global-mode 1)
-        (message "yasnippet: finishing loading.")
-        )
-
-
-    ;; ;;; Load YASnippet when Company becomes active
-    ;; (defun my-company-load-yasnippet ()
-    ;;   "Load and enable YASnippet when Company becomes active."
-    ;;   (require 'yasnippet)
-    ;;   (yas-global-mode 1))
+  (use-package yasnippet
+    :ensure t
+    :defer t
+    :hook (prog-mode . yas-minor-mode)
+    :custom
+    (yas-snippet-dirs '("~/.emacs.d/snippets_mine/"))
+    (message "yasnippet: setup with snippets_mine.")
+    :config
+    ;; Don't let yas grab TAB: shift-tab expands the stippets + next
+    (define-key yas-minor-mode-map (kbd "<tab>") nil)
+    (define-key yas-minor-mode-map (kbd "TAB") nil)
+    (define-key yas-minor-mode-map
+    	      (kbd "<backtab>")  yas-maybe-expand)
+    (message "yasnippet: removed \"TAB\" and <tab> from starting snippets: Using <backtab>.")
+    (define-key yas-keymap [(tab)] nil)
+    (define-key yas-keymap (kbd "TAB") nil)
+    (message "yasnippet: removed [(tab)] and \"TAB\" from iterating snippets options.")
+    (define-key yas-keymap
+                (kbd "<tab>")
+                (yas-filtered-definition
+                 'yas-next-field-or-maybe-expand))
+    (define-key yas-keymap
+    	      (kbd "<backtab>")
+    	      (yas-filtered-definition
+    	       'yas-prev-field))
+    (message "yasnippet: iterating with snippets: <tab>/<backtab> for next/prev, respectively.")
+    (yas-global-mode 1)
+    (message "yasnippet: finishing loading."))
     #+end_src
-
-Special function to handle [TAB]
-#+begin_src emacs-lisp
-  ;; ;;; TAB handling
-  ;; (defun my-company-tab ()
-  ;;   "Handle TAB for Company and YASnippet."
-  ;;   (interactive)
-  ;;   (cond
-  ;;    ;; Company completion popup is active.
-  ;;    ((company--active-p)
-  ;;     (company-complete-selection))
-
-  ;;    ;; A YASnippet can be expanded here.
-  ;;    ((yas-maybe-expand))
-
-  ;;    ;; Otherwise perform normal indentation.
-  ;;    (t
-  ;;     (indent-for-tab-command))))
-#+end_src
 
 Box config
 #+begin_src emacs-lisp
@@ -996,8 +889,7 @@ Lsp-mode is the client (emacs) - server application.
     (lsp-ui-doc-show-with-mouse nil)
     (lsp-ui-sideline-show-diagnostics t)
     (lsp-ui-sideline-show-hover t)
-    (lsp-ui-sideline-show-code-actions t)
-    )
+    (lsp-ui-sideline-show-code-actions t))
 #+end_src
 *** C/C++ language server: clangd
 This is not the compiler clang. In fact I will be using gcc instead for compilation.
@@ -1005,7 +897,7 @@ This is not the compiler clang. In fact I will be using gcc instead for compilat
   (add-hook 'c-mode-hook #'lsp-deferred)
   (add-hook 'c++-mode-hook #'lsp-deferred)
 #+end_src
-** Treemacs
+** LSP-Treemacs
 #+begin_src emacs-lisp
   (use-package lsp-treemacs
     :after lsp-mode)
@@ -1106,6 +998,7 @@ It will take some time to understand the key bindings of magit but hopefully it 
   ;; - https://magic.vc/manual/ghub/Getting-Started.html
   (use-package forge
     :after magit)
+  (setq auth-sources '("~/.authinfo"))
 #+end_src
 ** Treemacs
 *** Setup treemacs
@@ -1248,14 +1141,6 @@ M-n breaks with company. Attemped map with C-q (closer with the pinky-emacs chec
 #+begin_src emacs-lisp
   (global-set-key (kbd "<C-f3>") 'whitespace-mode)
 #+end_src
-** Ctrl+I as backtab (shift+tab)
-#+begin_src emacs-lisp
-  ;; (defun mj/insert-tab ()
-  ;;   "Insert a literal TAB char"
-  ;;   (interactive)
-  ;;   (insert "\t"))
-  ;; (global-set-key (kbd "<backtab>") #'mj/insert-tab)
-#+end_src
 * 42 Configuration
 ** Compilation with cc and warning flags
 I might revert this to the make command instead in the near future.
@@ -1397,4 +1282,3 @@ I might revert this to the make command instead in the near future.
 #+begin_src emacs-lisp
   (setq gc-cons-threshold (* 2 1000 1000))
 #+end_src
-
